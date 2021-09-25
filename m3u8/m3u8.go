@@ -23,18 +23,17 @@ func init() {
 	// 跳过证书验证
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, //nolint:gosec
 		},
 	}
 	client = &http.Client{Transport: transport}
-
 }
 
 // M3U8 参数: https://blog.csdn.net/weixin_41635750/article/details/108066684
-type M3U8 struct {
+type M3U8 struct { //nolint:maligned
 	IsM3U8 bool
 	// 上级m3u8的url
-	ParentUrl string
+	ParentURL string
 	// url
 	Url string
 	// 主域名
@@ -107,7 +106,7 @@ func NewM3U8(url string) (m3u8 *M3U8, err error) {
 		streamInfo := m3u8.GetMaxBandwidthInfo()
 		parentUrl := m3u8.Url
 		m3u8 = &streamInfo.SubM3u8
-		m3u8.ParentUrl = parentUrl
+		m3u8.ParentURL = parentUrl
 		err = m3u8.ParseUrl(streamInfo.SubM3u8.Url)
 		if err != nil {
 			return nil, err
