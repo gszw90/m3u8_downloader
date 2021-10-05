@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -32,6 +33,7 @@ func init() {
 // M3U8 参数: https://blog.csdn.net/weixin_41635750/article/details/108066684
 type M3U8 struct { //nolint:maligned
 	IsM3U8 bool
+	GNum   int
 	// 上级m3u8的url
 	ParentURL string
 	// url
@@ -53,13 +55,13 @@ type M3U8 struct { //nolint:maligned
 	Keys []Key
 	// 播放列表,有带宽,分辨率等信息,用户根据带宽自行选择播放文件
 	StreamInfos []StreamInfo
-
 	// 保存的内容
 	OutputName string
 	// 保存目录
 	OutputPath string
 }
 
+// Key 加密信息
 type Key struct {
 	// 加密方法,如果是NONE标识不需要解密,AES-128使用aes128解密
 	Method string
@@ -95,6 +97,7 @@ type Ts struct {
 	Key   Key    // 如果文件被加密,加密的信息
 }
 
+// NewM3U8 生成实例
 func NewM3U8(url string) (m3u8 *M3U8, err error) {
 	m3u8 = &M3U8{}
 	err = m3u8.ParseUrl(url)
@@ -125,8 +128,16 @@ func (m *M3U8) SetOutputName(name string) {
 	m.OutputName = name
 }
 
+func (m *M3U8) SetGNum(gNum int) {
+	m.GNum = gNum
+}
+
 // Run 启动下载解析任务
 func (m *M3U8) Run() (err error) {
+	if m.GNum <= 0 {
+		m.GNum = runtime.NumCPU() * 5
+	}
+
 	err = m.DownloadTsList()
 	if err != nil {
 		m.CleanTsLists()
@@ -149,10 +160,6 @@ func (m *M3U8) DownloadTsList() (err error) {
 		err = errors.New("非m3u8格式文件")
 		return err
 	}
-	//if m.HasKey {
-	//	err = errors.New("暂不支持加密数据")
-	//	return err
-	//}
 	tsLength := len(m.TsLists)
 	if tsLength == 0 {
 		err = errors.New("ts数据列表为空")
@@ -170,7 +177,7 @@ func (m *M3U8) DownloadTsList() (err error) {
 	//if err != nil {
 	//	return err
 	//}
-	goroutineNum := 16
+	goroutineNum := m.GNum
 	downloadChan := make(chan Ts, goroutineNum)
 	doneChan := make(chan int)
 	finished := false
@@ -315,7 +322,7 @@ func DownloadTs(ts Ts) (err error) {
 			return err
 		}
 		ts.Key.KeyValue = keyBytes
-		fmt.Printf("key => %+v\n", ts.Key)
+		// fmt.Printf("key => %+v\n", ts.Key)
 		// 解密ts文件
 		tsContent, err = AesDecrypt(tsContent, keyBytes, []byte(ts.Key.IV))
 		if err != nil {

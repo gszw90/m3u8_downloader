@@ -35,17 +35,6 @@ func main() {
 }
 
 func run() {
-	if M3u8Url == "" {
-		//log.Println("url is empty")
-		//return
-		M3u8Url = "https://1252524126.vod2.myqcloud.com/9764a7a5vodtransgzp1252524126/0176cbbd5285890799673243539/drm/v.f230.m3u8"
-	}
-	if OutputName == "" {
-		//log.Println("file name is empty")
-		//return
-		OutputName = "output_key.mp4"
-	}
-
 	//urlString := "https://v2.xw0371.com/20180401/wiyCDyE3/index.m3u8"
 	// normal
 	//urlString := "https://shangzhibo-img.b0.upaiyun.com/client/user/100994/1526289188264/1526289188242_Session1GANandSynthesis-processed.m3u8"
@@ -54,21 +43,25 @@ func run() {
 	// http://vod.ijntv.cn/2016/1477/6417/1115/147764171115.ssm/147764171115-419k.m3u8
 	// key
 	// https://1252524126.vod2.myqcloud.com/9764a7a5vodtransgzp1252524126/0176cbbd5285890799673243539/drm/v.f230.m3u8
+	if M3u8Url == "" {
+		log.Println("url is empty")
+		return
+		//M3u8Url = "https://1252524126.vod2.myqcloud.com/9764a7a5vodtransgzp1252524126/0176cbbd5285890799673243539/drm/v.f230.m3u8"
+	}
+	if OutputName == "" {
+		log.Println("file name is empty")
+		return
+		//OutputName = "output_key.mp4"
+	}
 
 	m3u8, err := m3u82.NewM3U8(M3u8Url)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
 	m3u8.SetOutputPath(OutputPath)
 	m3u8.SetOutputName(OutputName)
-	//typeVal := reflect.TypeOf(*m3u8)
-	//valueVal := reflect.ValueOf(*m3u8)
-	//for i:=0;i<typeVal.NumField();i++{
-	//	fmt.Printf("%s => %#v\n",typeVal.Field(i).Name,valueVal.Field(i).Interface())
-	//}
-	//return
-
+	m3u8.SetGNum(MaxGoroutine)
+	// 运行
 	err = m3u8.Run()
 	if err != nil {
 		log.Println(err.Error())
